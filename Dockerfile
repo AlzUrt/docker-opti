@@ -1,24 +1,13 @@
-# Image de base Node.js
-FROM node:latest
-
-# Installation des dépendances
-COPY package.json  /app/
+FROM node:alpine as builder
 WORKDIR /app
+COPY package*.json ./
 RUN npm install
+COPY . .
+RUN npm run build 
 
-# Ajout des fichiers du projet
-COPY . /app
 
-# Build de l'application Vue.js
-RUN npm run build
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Installation de Nginx sur la même image
-RUN apt-get update
-RUN  apt-get install -y nginx python3
-
-# Copie des fichiers de build vers le dossier de Nginx
-RUN cp -r /app/dist/* /var/www/html
-
-EXPOSE 80
-# Démarrage de Nginx
+EXPOSE 8000
 CMD ["nginx", "-g", "daemon off;"]
